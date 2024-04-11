@@ -1,4 +1,4 @@
 # Pip Requirements File
 shodan 
-kafka-python
+confluent_kafka
 python-dotenv

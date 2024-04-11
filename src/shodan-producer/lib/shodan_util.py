@@ -35,10 +35,28 @@ class shodanAPI:
             dict: A dictionary containing the search results.
 
         Raises:
-            str: Error message if an API error occurs.
+            ValueError: No ASN passed through
         """
-        try:
-            return self.api.search(f"asn:{asn}")
-
-        except shodan.APIError as e:
-            return f"Error: {e}"
+        if asn is None:
+            raise ValueError("ASN is undefined")
+        
+        return self.api.search(f"asn:{asn}")
+        
+    def count_by_asn(self, asn): 
+        """
+        Perform a Shodan API count by ASN (Autonomous System Number). 
+        
+        Args: 
+            asn (str): The ASN to search for. 
+            
+        Returns: 
+            int: Number of items returned 
+            
+        Raises:
+            ValueError: No ASN passed through
+        """
+        if asn is None: 
+            raise ValueError("ASN is undefined")
+        
+        return int(self.api.count(f"asn:{asn}").get('total'))
+    

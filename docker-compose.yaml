@@ -1,25 +1,20 @@
-# Sample from https://github.com/conduktor/kafka-stack-docker-compose/blob/master/zk-single-kafka-single.yml
-
-version: '2.1'
+version: '2'
 services:
-  zoo:
-    image: confluentinc/cp-zookeeper:7.4.4
-    hostname: zoo1
-    container_name: zoo1
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    container_name: zookeeper
     ports:
       - "2181:2181"
     env_file:
       - .env
 
   kafka:
-    image: confluentinc/cp-kafka:7.4.4
-    hostname: kafka1
-    container_name: kafka1
+    image: confluentinc/cp-kafka
+    container_name: kafka
     ports:
-      - "9092:9092"
+      - "127.0.0.1:9092:9092"
       - "29092:29092"
-      - "9999:9999"
     env_file:
       - .env
     depends_on:
-      - zoo1
+      - zookeeper
