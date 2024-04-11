@@ -4,28 +4,11 @@ Project that takes in batch/stream input from Shodan.io's API and feeds it into 
 
 ETL can be broken down into three major stages: extraction, transformation, and loading. 
 
-### Extraction 
+## Extraction 
 
 Taking in the actual data 
 
 The plan is to use a Python program running in Docker that continually finds the right information and inputs it into a Kafka topic
-
-### Transformation 
-
-In order to standardize this data, drop unnecessary information, and more, Apache Airflow will be utilized. 
-
-> If this fails, the transformation will be done by the extraction step in order to preserve the "stream" aspect of the project
-
-### Loading 
-
-To get the data back to consumers the final data will be put into a Kafka topic that can easily be subscribed to 
-
-
-### Displaying 
-
-If there's extra time, a flask dashboard will be built to display the Shodan data and statistics about the pipeline
-
-# Pipeline
 
 ### Shodan Producer Container 
 
@@ -37,6 +20,13 @@ If there's extra time, a flask dashboard will be built to display the Shodan dat
 - Dockerfile that wraps the code and installs the Python runtime
 - Needs entrypoint.sh that starts this 
 
+
+## Transformation 
+
+In order to standardize this data, drop unnecessary information, and more, Apache Airflow will be utilized. 
+
+> If this fails, the transformation will be done by the extraction step in order to preserve the "stream" aspect of the project
+
 ### Airflow Transformation Container
 
 - Converts datatypes if needed 
@@ -47,11 +37,18 @@ If there's extra time, a flask dashboard will be built to display the Shodan dat
 
 - Either in prebuilt Docker container or Dockerfile defined to install this 
 
-### Kafka 
+### Crowdsec Enrich Data 
 
-- Connects the pipeline stages together 
-- Ensures delivery of data
-- Easy connection point for feeding data to multiple sources 
+- Crowdsec LAPI Container
+- Python container that queries LAPI with IPs for their status
+
+## Loading 
+
+To get the data back to consumers the final data will be put into a Kafka topic that can easily be subscribed to 
+
+### MongoDB Connector
+
+- Store consumed data in MongoDB for historic trends
 
 ### Python Flask API 
 
@@ -73,12 +70,19 @@ If there's extra time, a flask dashboard will be built to display the Shodan dat
 
 ### Python Flask Display 
 
-- Displays the stats from the Flask API
+- Displays the stats from the Flask API 
 - Displays an iFrame of the discord alert channel to show alerts
 
 - Dockerfile that wraps the code and installs the Python runtime
 - Needs entrypoint.sh that starts this 
 
-### Meta 
+## Kafka 
+
+- Connects the pipeline stages together 
+- Ensures delivery of data
+- Easy connection point for feeding data to multiple sources 
+
+## Meta 
 
 - Docker compose that wraps the build information into one for convenient deployment
+- This can be easily converted to charts for K8

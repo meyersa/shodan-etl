@@ -18,3 +18,21 @@ services:
       - .env
     depends_on:
       - zookeeper
+
+  # shodan-producer
+  shodan-producer: 
+    build: 
+      context: '.\]'
+  # airflow-transformation
+
+  # crowdsec-enrich
+
+  # crowdsec-lapi-enrich
+
+  # mongodb-connector
+
+  # flaskp-api-connector
+
+  # dispatcher-connector
+
+  # flask-display-connector

@@ -4,8 +4,8 @@
 # - Loads the environment variables
 #   - Handles .env location
 #   - Handles missing environment variables
-# TODO: - Connects to Shodan API
-# TODO:- Runs specified Queries
+# - Connects to Shodan API
+# - Runs specified Queries
 # TODO:  - Loads the queries
 # TODO:  - Handles failures of queries
 # TODO:- Dispatches the results to Kafka topic
