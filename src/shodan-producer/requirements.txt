@@ -1,0 +1,4 @@
+# Pip Requirements File
+shodan 
+kafka-python
+python-dotenv
