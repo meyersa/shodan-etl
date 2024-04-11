@@ -7,7 +7,7 @@ RUN apt update && apt upgrade -y
 RUN apt install python3 
 
 # Import producer code 
-COPY ./src/shodan-producer . 
+COPY ./src . 
 
 # Install Pip packages
 RUN pip3 install -r requirements.txt 

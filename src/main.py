@@ -12,7 +12,6 @@
 # TODO:- Continually runs on a specified interval
 
 from dotenv import load_dotenv
-from pathlib import Path
 import os
 from lib.shodan_util import shodanAPI
 from lib.kafka_util import KafkaConnection
