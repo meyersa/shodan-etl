@@ -15,14 +15,28 @@ from lib.shodan_util import shodanAPI
 from lib.kafka_util import KafkaConnection
 from lib.env_util import get_env_variable
 
+from datetime import datetime
+import time 
+
 def main():
+    print("Gathering ENVs")
     shodan_api_key = get_env_variable("SHODAN_API_KEY")
     asn = get_env_variable("ASN")
+    kafka_connection = get_env_variable("KAFKA_CONNECTION")
 
+    print("Connecting to Shodan.io")
     api = shodanAPI(shodan_api_key)
-    producer = KafkaConnection('localhost:29092', 'shodan-asn-count')
 
-    producer.send(value=api.count_by_asn(asn))
+    print("Connecting to Kafka")
+    producer = KafkaConnection(kafka_connection, 'shodan-asn-count')
+
+    print("Starting send loop")
+    while True: 
+        time.sleep(5)
+        print("Sending")
+        producer.send(value=f'{datetime.now()} {api.count_by_asn(asn)}')
+            
+        
 
 # Only run in main
 if __name__ == "__main__":

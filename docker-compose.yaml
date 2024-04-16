@@ -12,7 +12,7 @@ services:
     image: confluentinc/cp-kafka
     container_name: kafka
     ports:
-      - "127.0.0.1:9092:9092"
+      - "9092:9092"
       - "29092:29092"
     env_file:
       - .env
@@ -20,12 +20,31 @@ services:
       - zookeeper
 
   # shodan-producer
-  # shodan-producer: 
-  #   build: 
-  #     context: './src'
+  shodan-producer:
+    image: python-runner
+    build:
+      context: ./
+    environment:
+      - SCRIPT=shodan-producer
+    env_file:
+      - .env
+    depends_on:
+      - kafka
+
+
   # airflow-transformation
 
   # crowdsec-enrich
+  crowdsec-enrich:
+    image: python-runner
+    build:
+      context: ./
+    environment:
+      - SCRIPT=crowdsec-enrich
+    env_file:
+      - .env
+    depends_on:
+      - kafka
 
   # crowdsec-lapi-enrich
 
@@ -36,3 +55,4 @@ services:
   # dispatcher-connector
 
   # flask-display-connector
+

@@ -21,10 +21,6 @@ def load_env_variables():
     elif os.path.exists("../../.env"):
         load_dotenv('../../.env')
 
-    # Exit if neither
-    else:
-        raise FileNotFoundError("Neither local .env nor fallback .env file found")
-
 def get_env_variable(variable_name):
     """
     Loads the specified environment variable.
