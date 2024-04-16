@@ -20,9 +20,9 @@ services:
       - zookeeper
 
   # shodan-producer
-  shodan-producer: 
-    build: 
-      context: '.\]'
+  # shodan-producer: 
+  #   build: 
+  #     context: './src'
   # airflow-transformation
 
   # crowdsec-enrich
