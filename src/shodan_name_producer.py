@@ -27,9 +27,14 @@ def main():
 
     while True:
         print("Sending")
-        
+                    
         try:
-            producer.send(value=api.raw_query(f'CMICH'))
+            result = api.raw_query(f'CMICH')
+
+            for res in result: 
+                producer.send(value=res)
+                time.sleep(5)
+                
             print("Sent")
             
         except ValueError: 

@@ -30,7 +30,12 @@ def main():
         print("Sending")
         
         try:
-            producer.send(value=api.raw_query(f'asn:{asn}'))
+            result = api.raw_query(f'asn:{asn}')
+
+            for res in result: 
+                producer.send(value=res)
+                time.sleep(5)
+                
             print("Sent")
             
         except ValueError: 

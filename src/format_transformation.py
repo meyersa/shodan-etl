@@ -17,33 +17,20 @@ def main():
     
     print("Starting loop")
     while True: 
-        time.sleep(5)
-
         print("Polling")
-        msg = Consumer.poll_message()
+        results = Consumer.poll_message()
 
-        if msg is None: 
+        if results is None: 
             continue
-
-        print(msg) 
+            
+        results = json.loads(results)
 
         with open('output.txt', 'w') as f: 
-            for entry in msg:
-                f.write(entry)
+            for host in results: 
+                # f.write(host)
+                print("Object: ", host)                                    
 
-    with open('./src/output.txt') as msg_file:
-        msg_file = msg_file.read()
-
-        for key, value in msg_file: 
-            print(key + " " + value)
-        
-        
-        # msg_file = msg_file.replace("'", "\"")
-        
-        # msg_json = json.dumps(msg_file.read(), separators=(',', ':'), indent=4)
-        msg_json = json.loads(msg_file)
-        print(msg_json)
-        
+        time.sleep(5)
 
 # Only run in main
 if __name__ == "__main__":

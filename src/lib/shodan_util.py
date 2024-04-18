@@ -1,4 +1,5 @@
 import shodan
+import json
 
 class shodanAPI:
     """
@@ -56,6 +57,8 @@ class shodanAPI:
         if not trimmed_results:
             raise ValueError("Removed all elements")
         
+        trimmed_results = json.dumps(trimmed_results, indent=4)
+
         return trimmed_results
 
     def raw_count(self, query):
@@ -94,7 +97,9 @@ class shodanAPI:
 
         result = self.api.search(query)
         num_results = result['total']
-        all_results = self.trim_results(result['matches'])
+
+        all_results = []
+        all_results.append(self.trim_results(result['matches']))
 
         if num_results <= 100:
             return all_results
@@ -102,9 +107,7 @@ class shodanAPI:
         page_num = 2
         while (page_num - 1) * 100 < num_results:
             cur_res = self.api.search(query, page=page_num)
-            all_results.extend(self.trim_results(cur_res['matches']))
+            all_results.append(self.trim_results(cur_res['matches']))
             page_num += 1
                 
-        print(f'Initial: {num_results} | Post: {len(all_results)}')
-        
         return all_results
