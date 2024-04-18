@@ -1,6 +1,5 @@
 import shodan
 
-
 class shodanAPI:
     """
     Connection class for interacting with the Shodan API.
@@ -47,8 +46,10 @@ class shodanAPI:
                     continue  # Skip dictionary results
                 elif isinstance(value, str) and len(value) > 256:
                     continue  # Skip string results over 256 characters
-                elif isinstance(value, (int, str)):
+                elif isinstance(value, str):
                     trimmed_host[key] = value
+                elif isinstance(value, int):
+                    trimmed_host[key] = str(value)
             if trimmed_host:
                 trimmed_results.append(trimmed_host)
 
@@ -103,6 +104,8 @@ class shodanAPI:
             cur_res = self.api.search(query, page=page_num)
             all_results.extend(self.trim_results(cur_res['matches']))
             page_num += 1
-
+                
         print(f'Initial: {num_results} | Post: {len(all_results)}')
+        
+        json_result = json.dumps(all_results)
         return all_results

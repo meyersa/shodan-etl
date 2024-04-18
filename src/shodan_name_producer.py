@@ -26,16 +26,16 @@ def main():
     print("Starting send loop")
 
     while True:
-        time.sleep(60)
         print("Sending")
         
         try:
             producer.send(value=api.raw_query(f'CMICH'))
             print("Sent")
             
-        except: 
+        except ValueError: 
             print("Failed to send: ran into an error querying the Shodan API.. Continuing")
-            continue
+
+        time.sleep(60)
             
 # Only run in main
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ COPY ./requirements.txt /requirements.txt
 RUN pip3 install -r /requirements.txt 
 
 # Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
+COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Set the entrypoint

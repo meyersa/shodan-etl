@@ -18,14 +18,14 @@ services:
       - "29092:29092"
     env_file:
       - .env
-    depends_on:
-      - zookeeper
+    # depends_on:
+    #   - zookeeper
   # <-- End Kafka --> #
 
   # <-- Producers --> #
   shodan-asn-producer:
     image: python-runner
-    profiles: [ all ]
+    profiles: [ not-kafka, all ]
     container_name: shodan_asn_producer
     build:
       context: ./
@@ -38,12 +38,12 @@ services:
       - SCRIPT=shodan_asn_producer
     env_file:
       - .env
-    depends_on:
-      - kafka
+    # depends_on:
+    #   - kafka
 
   shodan-name-producer:
     image: python-runner
-    profiles: [ all ]
+    profiles: [ not-kafka, all ]
     container_name: shodan_name_producer
     build:
       context: ./
@@ -56,15 +56,15 @@ services:
       - SCRIPT=shodan_name_producer
     env_file:
       - .env
-    depends_on:
-      - kafka
+    # depends_on:
+    #   - kafka
   # <-- End Producers --> #
 
   # <-- Transformation --> #
-  crowdsec-enrich:
+  format-transformation:
     image: python-runner
-    profiles: [ transform, all ]
-    container_name: crowdsec_enrich
+    profiles: [ not-kafka, transform, all ]
+    container_name: format-transformation
     build:
       context: ./
     develop:
@@ -73,27 +73,29 @@ services:
           path: ./src
           target: /src
     environment:
-      - SCRIPT=crowdsec_enrich
+      - SCRIPT=format-transformation
     env_file:
       - .env
-    depends_on:
-      - kafka
-      
-  crowdsec-lapi: 
-    profiles: [ crowdsec_lapi, transform, all ]
-    image: crowdsecurity/crowdsec:latest-debian
-    container_name: crowdsec_lapi
-    restart: always 
-    environment:
-      LOG_TRACE: true
-      DISABLE_AGENT: true
-      LOCAL_API_URL: ${CROWDSEC_LAPI_URL}
-      ENROLL_KEY: "clmat9j0y0000mi08kdfow99a"
-      ENROLL_INSTANCE_NAME: "shodan-etl"
-      BOUNCER_KEY_ETL: ${CROWDSEC_LAPI_KEY}
-    ports: 
-      - "127.0.0.1:8080:8080"
+    # depends_on:
+    #   - kafka
 
+  # crowdsec-enrich:
+  #   image: python-runner
+  #   profiles: [ not-kafka, transform, all ]
+  #   container_name: crowdsec_enrich
+  #   build:
+  #     context: ./
+  #   develop:
+  #     watch:
+  #       - action: rebuild
+  #         path: ./src
+  #         target: /src
+  #   environment:
+  #     - SCRIPT=crowdsec_enrich
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - kafka
   # mongodb-connector
 
   # flaskp-api-connector
@@ -102,3 +104,6 @@ services:
 
   # flask-display-connector
 
+volumes: 
+  crowdsec-config:
+  crowdsec-db:
