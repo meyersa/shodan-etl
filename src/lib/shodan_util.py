@@ -107,5 +107,4 @@ class shodanAPI:
                 
         print(f'Initial: {num_results} | Post: {len(all_results)}')
         
-        json_result = json.dumps(all_results)
         return all_results

@@ -29,11 +29,6 @@ services:
     container_name: shodan_asn_producer
     build:
       context: ./
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
-          target: /src
     environment:
       - SCRIPT=shodan_asn_producer
     env_file:
@@ -45,13 +40,6 @@ services:
     image: python-runner
     profiles: [ not-kafka, all ]
     container_name: shodan_name_producer
-    build:
-      context: ./
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
-          target: /src
     environment:
       - SCRIPT=shodan_name_producer
     env_file:
@@ -64,16 +52,9 @@ services:
   format-transformation:
     image: python-runner
     profiles: [ not-kafka, transform, all ]
-    container_name: format-transformation
-    build:
-      context: ./
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
-          target: /src
+    container_name: format_transformation
     environment:
-      - SCRIPT=format-transformation
+      - SCRIPT=format_transformation
     env_file:
       - .env
     # depends_on:
