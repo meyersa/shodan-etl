@@ -1,5 +1,4 @@
 # Enriches IP Information with Crowdsec
-# TODO: Subscribe to Kafka Consumer
 # TODO: Read data
 # TODO: Interface with Crowdsec LAPI
 # TODO: Subscribe to Kafka Producer
@@ -15,7 +14,6 @@ def main():
 
     print("Connecting to Kafka")
     Consumer = KafkaConnection(kafka_connection, 'shodan-asn-count')
-
     print("Starting loop")
     while True: 
         time.sleep(5)

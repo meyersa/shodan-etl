@@ -22,25 +22,36 @@ services:
   # shodan-producer
   shodan-producer:
     image: python-runner
+    container_name: shodan_producer
     build:
       context: ./
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+          target: /src
     environment:
-      - SCRIPT=shodan-producer
+      - SCRIPT=shodan_producer
     env_file:
       - .env
     depends_on:
       - kafka
-
 
   # airflow-transformation
 
   # crowdsec-enrich
   crowdsec-enrich:
     image: python-runner
+    container_name: crowdsec_enrich
     build:
       context: ./
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+          target: /src
     environment:
-      - SCRIPT=crowdsec-enrich
+      - SCRIPT=crowdsec_enrich
     env_file:
       - .env
     depends_on:
