@@ -20,6 +20,7 @@ The plan is to use a Python program running in Docker that continually finds the
 - Dockerfile that wraps the code and installs the Python runtime
 - Needs entrypoint.sh that starts this 
 
+> This is doing some transformations by dropping excessively large information after receiving the API Request 
 
 ## Transformation 
 

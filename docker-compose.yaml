@@ -1,7 +1,8 @@
-version: '2'
 services:
+  # <-- Kafka --> #
   zookeeper:
     image: confluentinc/cp-zookeeper
+    profiles: [ kafka, all ]
     container_name: zookeeper
     ports:
       - "2181:2181"
@@ -10,6 +11,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka
+    profiles: [ kafka, all ] 
     container_name: kafka
     ports:
       - "9092:9092"
@@ -18,11 +20,13 @@ services:
       - .env
     depends_on:
       - zookeeper
+  # <-- End Kafka --> #
 
-  # shodan-producer
-  shodan-producer:
+  # <-- Producers --> #
+  shodan-asn-producer:
     image: python-runner
-    container_name: shodan_producer
+    profiles: [ all ]
+    container_name: shodan_asn_producer
     build:
       context: ./
     develop:
@@ -31,17 +35,35 @@ services:
           path: ./src
           target: /src
     environment:
-      - SCRIPT=shodan_producer
+      - SCRIPT=shodan_asn_producer
     env_file:
       - .env
     depends_on:
       - kafka
 
-  # airflow-transformation
+  shodan-name-producer:
+    image: python-runner
+    profiles: [ all ]
+    container_name: shodan_name_producer
+    build:
+      context: ./
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+          target: /src
+    environment:
+      - SCRIPT=shodan_name_producer
+    env_file:
+      - .env
+    depends_on:
+      - kafka
+  # <-- End Producers --> #
 
-  # crowdsec-enrich
+  # <-- Transformation --> #
   crowdsec-enrich:
     image: python-runner
+    profiles: [ transform, all ]
     container_name: crowdsec_enrich
     build:
       context: ./
@@ -56,8 +78,21 @@ services:
       - .env
     depends_on:
       - kafka
-
-  # crowdsec-lapi-enrich
+      
+  crowdsec-lapi: 
+    profiles: [ crowdsec_lapi, transform, all ]
+    image: crowdsecurity/crowdsec:latest-debian
+    container_name: crowdsec_lapi
+    restart: always 
+    environment:
+      LOG_TRACE: true
+      DISABLE_AGENT: true
+      LOCAL_API_URL: ${CROWDSEC_LAPI_URL}
+      ENROLL_KEY: "clmat9j0y0000mi08kdfow99a"
+      ENROLL_INSTANCE_NAME: "shodan-etl"
+      BOUNCER_KEY_ETL: ${CROWDSEC_LAPI_KEY}
+    ports: 
+      - "127.0.0.1:8080:8080"
 
   # mongodb-connector
 

@@ -11,9 +11,11 @@ import time
 def main():
     print("Gathering ENVs")
     kafka_connection = get_env_variable("KAFKA_CONNECTION")
-
+    crowdsec_lapi_url = get_env_variable("CROWDSEC_LAPI_url")
+    crowdsec_lapi_key = get_env_variable("CROWDSEC_LAPI_key")
+    
     print("Connecting to Kafka")
-    Consumer = KafkaConnection(kafka_connection, 'shodan-asn-count')
+    Consumer = KafkaConnection(kafka_connection, 'shodan-producer')
     print("Starting loop")
     while True: 
         time.sleep(5)
@@ -26,7 +28,9 @@ def main():
 
         print(msg) 
 
-
+        with open('output.txt', 'w') as f: 
+            for entry in msg:
+                f.write(entry)
 
         
 
