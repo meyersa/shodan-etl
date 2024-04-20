@@ -57,7 +57,7 @@ class shodanAPI:
         if not trimmed_results:
             raise ValueError("Removed all elements")
         
-        trimmed_results = json.dumps(trimmed_results, indent=4)
+        trimmed_results = json.dumps(trimmed_results)
 
         return trimmed_results
 

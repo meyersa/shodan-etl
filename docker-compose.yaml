@@ -25,7 +25,7 @@ services:
   # <-- Producers --> #
   shodan-asn-producer:
     image: python-runner
-    profiles: [ not-kafka, all ]
+    profiles: [ not-kafka, producer, all ]
     container_name: shodan_asn_producer
     build:
       context: ./
@@ -38,7 +38,7 @@ services:
 
   shodan-name-producer:
     image: python-runner
-    profiles: [ not-kafka, all ]
+    profiles: [ not-kafka, producer, all ]
     container_name: shodan_name_producer
     environment:
       - SCRIPT=shodan_name_producer
@@ -49,34 +49,41 @@ services:
   # <-- End Producers --> #
 
   # <-- Transformation --> #
-  format-transformation:
+  transformation:
     image: python-runner
     profiles: [ not-kafka, transform, all ]
-    container_name: format_transformation
+    container_name: transformation
     environment:
-      - SCRIPT=format_transformation
+      - SCRIPT=transformation
     env_file:
       - .env
     # depends_on:
     #   - kafka
+  # <-- End Transformation --> # 
 
-  # crowdsec-enrich:
-  #   image: python-runner
-  #   profiles: [ not-kafka, transform, all ]
-  #   container_name: crowdsec_enrich
-  #   build:
-  #     context: ./
-  #   develop:
-  #     watch:
-  #       - action: rebuild
-  #         path: ./src
-  #         target: /src
-  #   environment:
-  #     - SCRIPT=crowdsec_enrich
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - kafka
+  # <-- Enrichment --> #
+  api-enrich:
+    image: python-runner
+    profiles: [ not-kafka, transform, all ]
+    container_name: api_enrich
+    environment:
+      - SCRIPT=api_enrich
+    env_file:
+      - .env
+
+  maxmind-enrich: 
+    image: observabilitystack/geoip-api
+    profiles: [ not-kafka, enrich, all]
+    container_name: maxmind_enrich
+    volumes:
+      - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
+      - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
+    ports: 
+      - 8080:8080
+    
+
+
+
   # mongodb-connector
 
   # flaskp-api-connector
