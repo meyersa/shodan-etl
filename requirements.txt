@@ -3,3 +3,4 @@ shodan
 confluent_kafka
 python-dotenv
 requests
+pymongo

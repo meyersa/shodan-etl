@@ -20,6 +20,7 @@ services:
     image: confluentinc/cp-zookeeper
     profiles: [ kafka, all ]
     container_name: zookeeper
+    restart: always
     ports:
       - "2181:2181"
     env_file:
@@ -29,6 +30,7 @@ services:
     image: confluentinc/cp-kafka
     profiles: [ kafka, all ] 
     container_name: kafka
+    restart: always 
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -66,6 +68,7 @@ services:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: transformation
+    restart: always 
     command: ["python", "-u", "transformation.py"]
     # depends_on:
     #   - kafka
@@ -74,6 +77,7 @@ services:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: api_enrich
+    restart: always     
     command: ["python", "-u", "api_enrich.py"]
     depends_on:
       - maxmind
@@ -82,19 +86,38 @@ services:
     image: observabilitystack/geoip-api
     profiles: [ not-kafka, transform, all]
     container_name: maxmind
+    restart: always 
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
       - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
     ports: 
       - 8080:8080
-    
-  # mongodb-connector
+  # <-- End Transformation --> #
 
-  # flaskp-api-connector
+  # <-- Loading --> #
+  mongo-load: 
+    <<: *common-python
+    profiles: [ not-kafka, loading, all ]
+    container_name: mongo-load
+    command: ["python", "-u", "mongo_load.py"]
+    depends_on:
+      - mongodb
 
-  # dispatcher-connector
+  mongodb: 
+    profiles: [ not-kafka, loading, all ]
+    container_name: mongodb
+    image: mongo:latest
+    restart: always 
+    env_file:
+      - .env
+    volumes: 
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/init-mongo.js
+      - mongodb-data:/data/db
+    ports: 
+      - "127.0.0.1:27017:27017"
+  # <-- Loading --> #
 
-  # flask-display-connector
+  # TODO: Some kind of flask display for stats
 
   # <-- Development --> #
   kadeck: 
@@ -111,3 +134,4 @@ services:
 volumes: 
   crowdsec-config:
   crowdsec-db:
+  mongodb-data:
