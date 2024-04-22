@@ -15,9 +15,13 @@ import time
 def main():
     print("Gathering ENVs")
     shodan_api_key = get_env_variable("SHODAN_API_KEY")
-    asn = get_env_variable("ASN")
+    shodan_query = get_env_variable("SHODAN_QUERY")
     kafka_connection = get_env_variable("KAFKA_CONNECTION")
-
+    delay = int(get_env_variable("DELAY") )
+    
+    # Start delay
+    time.sleep(delay)
+    
     print("Connecting to Shodan.io")
     api = shodanAPI(shodan_api_key)
 
@@ -25,23 +29,22 @@ def main():
     producer = KafkaConnection(kafka_connection, 'shodan-producer')
 
     print("Starting send loop")
-
     while True:
         print("Sending")
         
         try:
-            result = api.raw_query(f'asn:{asn}')
+            result = api.raw_query(shodan_query)
 
             for res in result: 
-                producer.send(value=res)
+                producer.send(value=res, key="generic")
                 time.sleep(5)
-                
+                    
             print("Sent")
             
         except ValueError: 
             print("Failed to send: ran into an error querying the Shodan API.. Continuing")
             
-        time.sleep(60)
+        time.sleep(delay)
 
 # Only run in main
 if __name__ == "__main__":

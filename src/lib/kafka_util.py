@@ -66,7 +66,7 @@ class KafkaConnection:
                 }
             )
 
-    def send(self, value):
+    def send(self, value, key):
         """
         Send a message to the Kafka topic.
 
@@ -79,7 +79,7 @@ class KafkaConnection:
         try:
             json_value = json.dumps(value)
 
-            self.producer.produce(self.topic, key='count', value=json_value)
+            self.producer.produce(self.topic, key=key, value=json_value)
             self.producer.flush()
 
         except error.KafkaError as e:

@@ -98,6 +98,8 @@ class shodanAPI:
         result = self.api.search(query)
         num_results = result['total']
 
+        print(num_results)
+        
         all_results = []
         all_results.append(self.trim_results(result['matches']))
 

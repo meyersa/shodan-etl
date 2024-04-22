@@ -1,3 +1,19 @@
+x-common-python: &common-python
+  image: python-runner
+  build: 
+    context: . 
+  develop:
+    watch: 
+      - action: sync+restart
+        path: ./src
+        target: /src
+      - action: rebuild
+        path: ./requirements.txt
+      - action: rebuild
+        path: ./.env
+  env_file:
+    - .env
+
 services:
   # <-- Kafka --> #
   zookeeper:
@@ -24,58 +40,47 @@ services:
 
   # <-- Producers --> #
   shodan-asn-producer:
-    image: python-runner
+    <<: *common-python
     profiles: [ not-kafka, producer, all ]
     container_name: shodan_asn_producer
-    build:
-      context: ./
     environment:
-      - SCRIPT=shodan_asn_producer
-    env_file:
-      - .env
+      - SHODAN_QUERY=asn:AS27274
+    command: ["python", "-u", "shodan_producer.py"]
     # depends_on:
     #   - kafka
 
   shodan-name-producer:
-    image: python-runner
+    <<: *common-python
     profiles: [ not-kafka, producer, all ]
     container_name: shodan_name_producer
     environment:
-      - SCRIPT=shodan_name_producer
-    env_file:
-      - .env
+      - SHODAN_QUERY=CMICH
+    command: ["python", "-u", "shodan_producer.py"]
     # depends_on:
     #   - kafka
+
   # <-- End Producers --> #
 
   # <-- Transformation --> #
   transformation:
-    image: python-runner
+    <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: transformation
-    environment:
-      - SCRIPT=transformation
-    env_file:
-      - .env
+    command: ["python", "-u", "transformation.py"]
     # depends_on:
     #   - kafka
-  # <-- End Transformation --> # 
 
-  # <-- Enrichment --> #
   api-enrich:
-    image: python-runner
+    <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: api_enrich
-    environment:
-      - SCRIPT=api_enrich
-    env_file:
-      - .env
+    command: ["python", "-u", "api_enrich.py"]
     depends_on:
       - maxmind
 
   maxmind: 
     image: observabilitystack/geoip-api
-    profiles: [ not-kafka, enrich, all]
+    profiles: [ not-kafka, transform, all]
     container_name: maxmind
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
@@ -83,9 +88,6 @@ services:
     ports: 
       - 8080:8080
     
-
-
-
   # mongodb-connector
 
   # flaskp-api-connector

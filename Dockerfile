@@ -1,23 +1,11 @@
-FROM ubuntu:latest
-
-# Upgrade
-RUN apt update && apt upgrade -y 
-
-# Install Python 
-RUN apt install -y python3 python3-pip
-
-# Import producer code 
-COPY ./src /src
+FROM python:3
 
 # Import requirements 
 COPY ./requirements.txt /requirements.txt
 
 # Install Pip packages
-RUN pip3 install -r /requirements.txt 
+RUN pip install -r /requirements.txt 
 
-# Copy entrypoint script
-COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY ./src /src 
 
-# Set the entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+WORKDIR /src

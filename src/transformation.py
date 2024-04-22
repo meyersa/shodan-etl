@@ -32,10 +32,10 @@ def main():
             num_results += 1
 
             try:
-                Producer.send(value=result)                
+                Producer.send(value=result,key="generic")                
             
             except ValueError: 
-                print("Failed to send: ran into an error querying the Shodan API.. Continuing")
+                print("Failed to send: ran into an error transforming data")
         
         print(f'Sent {num_results} parsed IPs')
         time.sleep(5)

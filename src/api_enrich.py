@@ -23,21 +23,20 @@ def main():
 
     print("Connecting to Kafka")
     Consumer = KafkaConnection(kafka_connection, 'transformed')
+    Producer = KafkaConnection(kafka_connection, 'enriched')
     print("Starting loop")
     
     while True: 
-        print("Polling")
-        msg:dict = Consumer.poll_message()
+        msg = Consumer.poll_message()
         
-        print("Before: ", msg)
-
         # Skip if no result
         if msg is None: 
             continue
         
         # Get the IP
         ip = msg.get("ip_str")
-
+        msg:dict
+        
         """
         Query MaxMind DB for location information
 
@@ -64,14 +63,14 @@ def main():
             print("Failed to query maxmind API")
 
         if maxmind_enrich.status_code == 200:
-            maxmind_enrich = dict(maxmind_enrich) 
+            maxmind_res = json.loads(maxmind_enrich.content)
             
-            del maxmind_enrich['asn']
-            del maxmind_enrich['asnOrganization']
-            del maxmind_enrich['asnNetwork']
+            del maxmind_res['asn']
+            del maxmind_res['asnOrganization']
+            del maxmind_res['asnNetwork']
 
             # Merge into result
-            msg.update(maxmind_enrich)
+            msg.update(maxmind_res)
 
         """
         Query Crowdsec (Local) for location information
@@ -94,9 +93,9 @@ def main():
             crowdsec_enrich = requests.get(f'{crowdsec_lapi_url}v1/decisions?ip={ip}', headers=crowdsec_header)
         except:
             print("Failed to query Crowdsec API")
-
-        if crowdsec_enrich.status_code == 200:
-            for ban in crowdsec_enrich.content:
+        
+        if crowdsec_enrich.status_code == 200 and crowdsec_enrich.content != b'null':
+            for ban in json.loads(crowdsec_enrich.content):
                 ban:dict
                 cur_ban = dict()
                 ban_id = ban.get('id')
@@ -108,8 +107,12 @@ def main():
                 
                 msg[f'ban_{ban_id}'] = cur_ban
 
-        print("Post enrich: ", msg)
-
+        try:
+            Producer.send(value=msg, key=ip)                
+            
+        except ValueError: 
+            print("Failed to send: ran into an error transforming data")
+            
 # Only run in main
 if __name__ == "__main__":
     main()
