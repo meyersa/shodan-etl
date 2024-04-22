@@ -1,5 +1,6 @@
 from confluent_kafka import Producer, Consumer, admin, error
 import socket
+import json 
 
 class KafkaConnection:
     """
@@ -76,7 +77,9 @@ class KafkaConnection:
             self._create_producer()
 
         try:
-            self.producer.produce(self.topic, key='count', value=str(value))
+            json_value = json.dumps(value)
+
+            self.producer.produce(self.topic, key='count', value=json_value)
             self.producer.flush()
 
         except error.KafkaError as e:
@@ -95,17 +98,13 @@ class KafkaConnection:
         if self.consumer is None:
             self._create_consumer()
         
-        # Return message if exist
-        return self.consumer.poll(timeout_ms).value().decode('utf-8')
+        messages = self.consumer.poll(timeout_ms)
+        messages = messages.value().decode('utf-8')
         
-    def __verify_or_create_topic(self):
-        """
-        Verify if the Kafka topic exists or create it if it doesn't.
-        """
-        if self.admin is None:
-            self._create_admin_client()
+        if messages is None: 
+            return None
+        
+        messages = json.loads(messages)
 
-        topic_list = [admin.NewTopic(self.topic)]
-        print(self.admin.list_topics(topic=self.topic))
-        if self.topic not in self.admin.list_topics():
-            self.admin.create_topics(new_topics=topic_list)
+        # Return message if exists
+        return messages

@@ -6,7 +6,7 @@
 from lib.kafka_util import KafkaConnection
 from lib.env_util import get_env_variable
 import time
-import json 
+import json
 
 def main():
     print("Gathering ENVs")
@@ -23,7 +23,7 @@ def main():
         
         if results is None: 
             continue
-            
+        
         results = json.loads(results)
         num_results = 0
         
@@ -32,7 +32,7 @@ def main():
             num_results += 1
 
             try:
-                Producer.send(value=json.dumps(result))                
+                Producer.send(value=result)                
             
             except ValueError: 
                 print("Failed to send: ran into an error querying the Shodan API.. Continuing")

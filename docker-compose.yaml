@@ -70,11 +70,13 @@ services:
       - SCRIPT=api_enrich
     env_file:
       - .env
+    depends_on:
+      - maxmind
 
-  maxmind-enrich: 
+  maxmind: 
     image: observabilitystack/geoip-api
     profiles: [ not-kafka, enrich, all]
-    container_name: maxmind_enrich
+    container_name: maxmind
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
       - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
@@ -92,6 +94,18 @@ services:
 
   # flask-display-connector
 
+  # <-- Development --> #
+  kadeck: 
+    image: xeotek/kadeck:latest
+    profiles: [ development ]
+    container_name: kadeck
+    ports: 
+      - 80:80
+    environment:
+      - xeotek_kadeck_free="kadeck@i.meyersa.com"
+      - xeotek_kadeck_port=80
+  # <-- Development --> # 
+  
 volumes: 
   crowdsec-config:
   crowdsec-db:

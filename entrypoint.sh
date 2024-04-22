@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Sleeping for Kafka to start"
-sleep 15s
+# sleep 15s
 echo "Done sleeping, continuing" 
 
 # Check if the SCRIPT environment variable is set

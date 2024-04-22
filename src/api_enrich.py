@@ -7,8 +7,8 @@
 from lib.kafka_util import KafkaConnection
 from lib.env_util import get_env_variable
 import time
-import json 
 import requests
+import json 
 
 def main():
 
@@ -24,46 +24,91 @@ def main():
     print("Connecting to Kafka")
     Consumer = KafkaConnection(kafka_connection, 'transformed')
     print("Starting loop")
+    
     while True: 
         print("Polling")
-        msg = Consumer.poll_message()
+        msg:dict = Consumer.poll_message()
+        
+        print("Before: ", msg)
 
+        # Skip if no result
         if msg is None: 
             continue
         
-        print("original msg", msg)
-        msg.replace("'", "\"")
-        msg = json.loads(msg)
-        print("post msg", msg)
+        # Get the IP
+        ip = msg.get("ip_str")
 
-        for res in msg: 
+        """
+        Query MaxMind DB for location information
 
-            ip = res.get("ip")
-            print("IP: ", ip)
+        Appends the following: 
+        - country
+        - stateprov
+        - stateprovCode
+        - city
+        - latitude
+        - longitude
+        - continent
+        - timezone
+        - *more depending on location such as usMetroCode
 
-            try: 
-                maxmind_enrich = requests.get(f'{maxmind_api_url}{ip}').json()
-            except: 
-                print("Failed to query maxmind API")
+        Does not preserve from Maxmind
+        - asn
+        - asnOrganization
+        - asnNetwork
+        """
+        maxmind_enrich = None 
+        try: 
+            maxmind_enrich = requests.get(f'{maxmind_api_url}{ip}')
+        except: 
+            print("Failed to query maxmind API")
 
-            if maxmind_enrich:
-                # res.update(maxmind_enrich)
-                print("Maxmind Result:", maxmind_enrich)
-            try:
-                crowdsec_enrich = requests.get(f'{crowdsec_lapi_url}v1/decisions?ip={ip}', headers=crowdsec_header).json()
-            except:
-                print("Failed to query Crowdsec API")
+        if maxmind_enrich.status_code == 200:
+            maxmind_enrich = dict(maxmind_enrich) 
+            
+            del maxmind_enrich['asn']
+            del maxmind_enrich['asnOrganization']
+            del maxmind_enrich['asnNetwork']
 
-            if crowdsec_enrich:
-                # res.update(crowdsec_enrich)
-                print("Crowdsec Result:", crowdsec_enrich)
-            print(ip)
+            # Merge into result
+            msg.update(maxmind_enrich)
 
-        print(msg) 
-        time.sleep(5)
+        """
+        Query Crowdsec (Local) for location information
 
+        Appends the following: 
+        - is_banned (depends on result)
+        - bans
+            - duration
+            - id
+            - origin
+            - scenario
 
-        
+        Does not preserve from Crowdsec
+        - scope
+        - type
+        - value
+        """
+        crowdsec_enrich = None
+        try:
+            crowdsec_enrich = requests.get(f'{crowdsec_lapi_url}v1/decisions?ip={ip}', headers=crowdsec_header)
+        except:
+            print("Failed to query Crowdsec API")
+
+        if crowdsec_enrich.status_code == 200:
+            for ban in crowdsec_enrich.content:
+                ban:dict
+                cur_ban = dict()
+                ban_id = ban.get('id')
+
+                cur_ban['duration'] = ban.get('duration')
+                cur_ban['id'] = ban.get('id')
+                cur_ban['origin'] = ban.get('origin')
+                cur_ban['scenario'] = ban.get('scenario')
+                
+                msg[f'ban_{ban_id}'] = cur_ban
+
+        print("Post enrich: ", msg)
 
 # Only run in main
 if __name__ == "__main__":

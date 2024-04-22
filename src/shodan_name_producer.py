@@ -25,6 +25,9 @@ def main():
 
     print("Starting send loop")
 
+    # TODO: Remove hack to space API calls
+    time.sleep(60)
+    
     while True:
         print("Sending")
                     
