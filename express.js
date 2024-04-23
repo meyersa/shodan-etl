@@ -93,7 +93,7 @@ app.get('/', async (req, res) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>IP Information Dashboard</title>
+      <title>Shodan ETL Dashboard</title>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
       <style>
         body {
@@ -185,26 +185,17 @@ app.get('/', async (req, res) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>IP Information Dashboard</h1>
+          <h1>Shodan ETL Dashboard</h1>
           <i class="fas fa-sun theme-switch" onclick="toggleDarkMode()"></i>
         </div>
         <div class="statistics">
-          <h2>Open Ports and Their Counts:</h2>
+          <h2>Top Open Ports:</h2>
           <div class="bars">
             ${statistics.open_ports.map(port => `
               <div class="bar">
                 <span>${port._id}</span>
                 <div class="bar-fill" style="width: ${(port.count / (statistics.open_ports[0] ? statistics.open_ports[0].count : 1)) * 100}%;"></div>
                 <span>${port.count}</span>
-              </div>`).join('')}
-          </div>
-          <h2>Unique Cities and Their Counts:</h2>
-          <div class="bars">
-            ${statistics.unique_cities.map(city => `
-              <div class="bar">
-                <span>${city._id}</span>
-                <div class="bar-fill" style="width: ${(city.count / (statistics.unique_cities[0] ? statistics.unique_cities[0].count : 1)) * 100}%;"></div>
-                <span>${city.count}</span>
               </div>`).join('')}
           </div>
           <h2>Most Popular Content:</h2>
@@ -216,7 +207,16 @@ app.get('/', async (req, res) => {
                 <span>${statistics.most_popular_content.count}</span>
               </div>` : 'N/A'}
           </div>
-          <h2>Bans:</h2>
+          <h2>Top Cities:</h2>
+          <div class="bars">
+            ${statistics.unique_cities.map(city => `
+              <div class="bar">
+                <span>${city._id}</span>
+                <div class="bar-fill" style="width: ${(city.count / (statistics.unique_cities[0] ? statistics.unique_cities[0].count : 1)) * 100}%;"></div>
+                <span>${city.count}</span>
+              </div>`).join('')}
+          </div>
+          <h2>Crowdsec Bans:</h2>
           <div class="bars">
             ${bansCount !== undefined ? `
               <div class="bar">
@@ -230,10 +230,6 @@ app.get('/', async (req, res) => {
                 <span>${noBansCount}</span>
               </div>` : 'N/A'}
           </div>
-          <h2>Last Three Records:</h2>
-          <ul>
-            ${statistics.last_three_records.map(record => `<li>${JSON.stringify(record)}</li>`).join('')}
-          </ul>
         </div>
       </div>
       <div class="footer">
