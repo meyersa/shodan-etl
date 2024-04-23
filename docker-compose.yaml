@@ -61,15 +61,15 @@ services:
     depends_on:
       - kafka
 
-  shodan-full-name-producer:
-    <<: *common-python
-    profiles: [ not-kafka, producer, all ]
-    container_name: shodan-full-name-producer
-    environment:
-      - SHODAN_QUERY=Central Michigan University
-    command: ["python", "-u", "shodan_producer.py"]
-    depends_on:
-      - kafka
+  # shodan-full-name-producer:
+  #   <<: *common-python
+  #   profiles: [ not-kafka, producer, all ]
+  #   container_name: shodan-full-name-producer
+  #   environment:
+  #     - SHODAN_QUERY=Central Michigan University
+  #   command: ["python", "-u", "shodan_producer.py"]
+  #   depends_on:
+  #     - kafka
   # <-- End Producers --> #
 
   # <-- Transformation --> #
