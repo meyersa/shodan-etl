@@ -44,7 +44,7 @@ services:
   shodan-asn-producer:
     <<: *common-python
     profiles: [ not-kafka, producer, all ]
-    container_name: shodan_asn_producer
+    container_name: shodan-asn-producer
     environment:
       - SHODAN_QUERY=asn:AS27274
     command: ["python", "-u", "shodan_producer.py"]
@@ -54,7 +54,7 @@ services:
   shodan-name-producer:
     <<: *common-python
     profiles: [ not-kafka, producer, all ]
-    container_name: shodan_name_producer
+    container_name: shodan-name-producer
     environment:
       - SHODAN_QUERY=CMICH
     command: ["python", "-u", "shodan_producer.py"]
@@ -64,7 +64,7 @@ services:
   shodan-full-name-producer:
     <<: *common-python
     profiles: [ not-kafka, producer, all ]
-    container_name: shodan_full_name_producer
+    container_name: shodan-full-name-producer
     environment:
       - SHODAN_QUERY=Central Michigan University
     command: ["python", "-u", "shodan_producer.py"]
@@ -85,7 +85,7 @@ services:
   api-enrich:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
-    container_name: api_enrich
+    container_name: api-enrich
     # restart: always     
     command: ["python", "-u", "api_enrich.py"]
     depends_on:
@@ -108,7 +108,7 @@ services:
   mongo-load: 
     <<: *common-python
     profiles: [ not-kafka, loading, all ]
-    container_name: mongo_load
+    container_name: mongo-load
     command: ["python", "-u", "mongo_load.py"]
     depends_on:
       - api-enrich
@@ -128,14 +128,21 @@ services:
       - "127.0.0.1:27017:27017"
   # <-- Loading --> #
 
-  # TODO: Some kind of flask display for stats
-  flask-display: 
-    <<: *common-python
-    profiles: [ not-kafka, display, all ]
-    container_name: flask_display
-    command: ["python", "-u", "flask_display.py"]
-    ports: 
-      - 5000:5000
+  express-display: 
+    profiles: [ all, display ]
+    container_name: express-display
+    build:
+      context: .
+      dockerfile: expressDockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - proxy
+      - default
+    
+    
     # depends_on:
     #   - mongodb
       
@@ -149,9 +156,25 @@ services:
     environment:
       - xeotek_kadeck_free="kadeck@i.meyersa.com"
       - xeotek_kadeck_port=80
+
+  cloudflared: 
+    profiles: [ cloudflared, all ]
+    image: cloudflare/cloudflared
+    container_name: cloudflared
+    restart: always 
+    command: tunnel run 
+    environment: 
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+    networks:
+      - proxy
   # <-- Development --> # 
-  
+
 volumes: 
   crowdsec-config:
   crowdsec-db:
   mongodb-data:
+
+networks: 
+  default:
+  proxy: 
+    name: proxy
