@@ -118,6 +118,7 @@ app.get("/", async (req, res) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Shodan ETL Dashboard</title>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+      <script defer data-domain="shodanetl.meyerstk.com" src="https://plausible.meyerstk.com/js/script.js"></script>
       <style>
         body {
           font-family: Arial, sans-serif;
