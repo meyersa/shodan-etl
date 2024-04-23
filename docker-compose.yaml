@@ -20,7 +20,7 @@ services:
     image: confluentinc/cp-zookeeper
     profiles: [ kafka, all ]
     container_name: zookeeper
-    # restart: always
+    restart: always
     ports:
       - "2181:2181"
     env_file:
@@ -30,14 +30,14 @@ services:
     image: confluentinc/cp-kafka
     profiles: [ kafka, all ] 
     container_name: kafka
-    # restart: always 
+    restart: always 
     ports:
       - "9092:9092"
       - "29092:29092"
     env_file:
       - .env
-    # depends_on:
-    #   - zookeeper
+    depends_on:
+      - zookeeper
   # <-- End Kafka --> #
 
   # <-- Producers --> #
@@ -60,16 +60,6 @@ services:
     command: ["python", "-u", "shodan_producer.py"]
     depends_on:
       - kafka
-
-  # shodan-full-name-producer:
-  #   <<: *common-python
-  #   profiles: [ not-kafka, producer, all ]
-  #   container_name: shodan-full-name-producer
-  #   environment:
-  #     - SHODAN_QUERY=Central Michigan University
-  #   command: ["python", "-u", "shodan_producer.py"]
-  #   depends_on:
-  #     - kafka
   # <-- End Producers --> #
 
   # <-- Transformation --> #
@@ -77,7 +67,7 @@ services:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: transformation
-    # restart: always 
+    restart: always 
     command: ["python", "-u", "transformation.py"]
     depends_on:
       - kafka
@@ -86,7 +76,7 @@ services:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: api-enrich
-    # restart: always     
+    restart: always     
     command: ["python", "-u", "api_enrich.py"]
     depends_on:
       - transformation
@@ -96,7 +86,7 @@ services:
     image: observabilitystack/geoip-api
     profiles: [ not-kafka, transform, all]
     container_name: maxmind
-    # restart: always 
+    restart: always 
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
       - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
@@ -109,6 +99,7 @@ services:
     <<: *common-python
     profiles: [ not-kafka, loading, all ]
     container_name: mongo-load
+    restart: always
     command: ["python", "-u", "mongo_load.py"]
     depends_on:
       - api-enrich
@@ -118,7 +109,7 @@ services:
     profiles: [ not-kafka, loading, mongodb, all ]
     container_name: mongodb
     image: mongo:latest
-    # restart: always 
+    restart: always 
     env_file:
       - .env
     volumes: 
@@ -126,11 +117,13 @@ services:
       - mongodb-data:/data/db
     ports: 
       - "127.0.0.1:27017:27017"
-  # <-- Loading --> #
+  # <-- End Loading --> #
 
+  # <-- Displaying --> #
   express-display: 
     profiles: [ all, display ]
     container_name: express-display
+    restart: always
     build:
       context: .
       dockerfile: expressDockerfile
@@ -141,11 +134,10 @@ services:
     networks:
       - proxy
       - default
-    
-    
-    # depends_on:
-    #   - mongodb
-      
+    depends_on:
+      - mongodb
+  # <-- End Displaying --> # 
+
   # <-- Development --> #
   kadeck: 
     image: xeotek/kadeck:latest
