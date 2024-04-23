@@ -1,9 +1,3 @@
-# Enriches IP Information with Crowdsec
-# TODO: Read data
-# TODO: Interface with Crowdsec LAPI
-# TODO: Subscribe to Kafka Producer
-# TODO: Push data
-
 from lib.kafka_util import KafkaConnection
 from lib.env_util import get_env_variable
 import time

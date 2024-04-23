@@ -1,13 +1,8 @@
 from flask import Flask, jsonify
 from pymongo import MongoClient
 from lib.env_util import get_env_variable
-import time 
 
 app = Flask(__name__)
-
-# Start delay
-delay = int(get_env_variable("DELAY") )
-time.sleep(delay)
     
 mongo_user = get_env_variable("MONGO_INITDB_ROOT_USERNAME")
 mongo_password = get_env_variable("MONGO_INITDB_ROOT_PASSWORD")
