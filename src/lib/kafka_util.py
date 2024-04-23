@@ -104,7 +104,11 @@ class KafkaConnection:
         if messages is None: 
             return None
         
-        messages = json.loads(messages)
-
+        try: 
+            messages = json.loads(messages)
+        except: 
+            print("Failed to convert to JSON")
+            return None
+        
         # Return message if exists
         return messages

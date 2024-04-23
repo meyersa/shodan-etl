@@ -17,9 +17,9 @@ def main():
     shodan_api_key = get_env_variable("SHODAN_API_KEY")
     shodan_query = get_env_variable("SHODAN_QUERY")
     kafka_connection = get_env_variable("KAFKA_CONNECTION")
-    delay = int(get_env_variable("DELAY") )
     
     # Start delay
+    delay = int(get_env_variable("DELAY") )
     time.sleep(delay)
     
     print("Connecting to Shodan.io")

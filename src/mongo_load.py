@@ -16,6 +16,10 @@ def main():
     mongo_user = get_env_variable("MONGO_INITDB_ROOT_USERNAME")
     mongo_password = get_env_variable("MONGO_INITDB_ROOT_PASSWORD")
     
+    # Start delay
+    delay = int(get_env_variable("DELAY") )
+    time.sleep(delay)
+    
     print("Connecting to Kafka")
     Consumer = KafkaConnection(kafka_connection, 'enriched')
     Producer = KafkaConnection(kafka_connection, 'loaded')
@@ -39,15 +43,29 @@ def main():
         results:dict
         ip = results.get("ip_str")
 
+        results_to_send = dict
+
         # Query Mongo For incoming IP 
         existing_record = collection.find_one({"ip": ip})
 
-        if existing_record: 
-            collection.replace_one({"ip": ip}, results)
-            
-        else: 
+        # If there is no result
+        if existing_record is None:
             collection.insert_one(results)
+            results_to_send.update(results)
             
+        # If the record is not the same
+        if existing_record != results: 
+            collection.replace_one({"ip": ip}, results)
+            results_to_send.update(results)
+            
+        if results_to_send:
+            # try: 
+            Producer.send(value=results_to_send, key=ip)
+                
+            # except:
+            #     print("Failed to send loaded results")
+
+
 # Only run in main
 if __name__ == "__main__":
     main()

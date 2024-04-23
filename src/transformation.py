@@ -12,10 +12,14 @@ def main():
     print("Gathering ENVs")
     kafka_connection = get_env_variable("KAFKA_CONNECTION")
     
+    # Start delay
+    delay = int(get_env_variable("DELAY") )
+    time.sleep(delay)
+    
     print("Connecting to Kafka")
     Consumer = KafkaConnection(kafka_connection, 'shodan-producer')
     Producer = KafkaConnection(kafka_connection, 'transformed')
-
+    
     print("Starting loop")
     while True: 
         print("Polling")

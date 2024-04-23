@@ -20,7 +20,7 @@ services:
     image: confluentinc/cp-zookeeper
     profiles: [ kafka, all ]
     container_name: zookeeper
-    restart: always
+    # restart: always
     ports:
       - "2181:2181"
     env_file:
@@ -30,7 +30,7 @@ services:
     image: confluentinc/cp-kafka
     profiles: [ kafka, all ] 
     container_name: kafka
-    restart: always 
+    # restart: always 
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -48,8 +48,8 @@ services:
     environment:
       - SHODAN_QUERY=asn:AS27274
     command: ["python", "-u", "shodan_producer.py"]
-    # depends_on:
-    #   - kafka
+    depends_on:
+      - kafka
 
   shodan-name-producer:
     <<: *common-python
@@ -58,9 +58,18 @@ services:
     environment:
       - SHODAN_QUERY=CMICH
     command: ["python", "-u", "shodan_producer.py"]
-    # depends_on:
-    #   - kafka
+    depends_on:
+      - kafka
 
+  shodan-full-name-producer:
+    <<: *common-python
+    profiles: [ not-kafka, producer, all ]
+    container_name: shodan_full_name_producer
+    environment:
+      - SHODAN_QUERY=Central Michigan University
+    command: ["python", "-u", "shodan_producer.py"]
+    depends_on:
+      - kafka
   # <-- End Producers --> #
 
   # <-- Transformation --> #
@@ -68,25 +77,26 @@ services:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: transformation
-    restart: always 
+    # restart: always 
     command: ["python", "-u", "transformation.py"]
-    # depends_on:
-    #   - kafka
+    depends_on:
+      - kafka
 
   api-enrich:
     <<: *common-python
     profiles: [ not-kafka, transform, all ]
     container_name: api_enrich
-    restart: always     
+    # restart: always     
     command: ["python", "-u", "api_enrich.py"]
     depends_on:
+      - transformation
       - maxmind
 
   maxmind: 
     image: observabilitystack/geoip-api
     profiles: [ not-kafka, transform, all]
     container_name: maxmind
-    restart: always 
+    # restart: always 
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
       - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
@@ -98,16 +108,17 @@ services:
   mongo-load: 
     <<: *common-python
     profiles: [ not-kafka, loading, all ]
-    container_name: mongo-load
+    container_name: mongo_load
     command: ["python", "-u", "mongo_load.py"]
     depends_on:
+      - api-enrich
       - mongodb
 
   mongodb: 
-    profiles: [ not-kafka, loading, all ]
+    profiles: [ not-kafka, loading, mongodb, all ]
     container_name: mongodb
     image: mongo:latest
-    restart: always 
+    # restart: always 
     env_file:
       - .env
     volumes: 
@@ -118,7 +129,16 @@ services:
   # <-- Loading --> #
 
   # TODO: Some kind of flask display for stats
-
+  flask-display: 
+    <<: *common-python
+    profiles: [ not-kafka, display, all ]
+    container_name: flask_display
+    command: ["python", "-u", "flask_display.py"]
+    ports: 
+      - 5000:5000
+    # depends_on:
+    #   - mongodb
+      
   # <-- Development --> #
   kadeck: 
     image: xeotek/kadeck:latest
