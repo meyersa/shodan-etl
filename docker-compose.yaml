@@ -21,8 +21,8 @@ services:
     profiles: [ kafka, all ]
     container_name: zookeeper
     restart: always
-    ports:
-      - "2181:2181"
+    # ports:
+    #   - "2181:2181"
     env_file:
       - .env
 
@@ -32,8 +32,8 @@ services:
     container_name: kafka
     restart: always 
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - "127.0.0.1:9092:9092"
+      - "127.0.0.1:29092:29092"
     env_file:
       - .env
     depends_on:
@@ -90,8 +90,8 @@ services:
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
       - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
-    ports: 
-      - 8080:8080
+    # ports: 
+    #   - 8080:8080
   # <-- End Transformation --> #
 
   # <-- Loading --> #
@@ -115,8 +115,8 @@ services:
     volumes: 
       - ./mongo-init.js:/docker-entrypoint-initdb.d/init-mongo.js
       - mongodb-data:/data/db
-    ports: 
-      - "127.0.0.1:27017:27017"
+    # ports: 
+    #   - "127.0.0.1:27017:27017"
   # <-- End Loading --> #
 
   # <-- Displaying --> #
@@ -127,8 +127,8 @@ services:
     build:
       context: .
       dockerfile: expressDockerfile
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"
     env_file:
       - .env
     networks:
@@ -143,8 +143,8 @@ services:
     image: xeotek/kadeck:latest
     profiles: [ development ]
     container_name: kadeck
-    ports: 
-      - 80:80
+    # ports: 
+    #   - 80:80
     environment:
       - xeotek_kadeck_free="kadeck@i.meyersa.com"
       - xeotek_kadeck_port=80
