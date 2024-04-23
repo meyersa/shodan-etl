@@ -1,5 +1,5 @@
-const express = require('express');
-const { MongoClient } = require('mongodb');
+const express = require("express");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 
@@ -29,22 +29,24 @@ let ipCollection;
   }
 })();
 
-app.get('/', async (req, res) => {
+app.get("/", async (req, res) => {
   try {
     if (!ipCollection) {
       throw new Error("MongoDB connection not established");
     }
 
-    // Get open ports and their counts, sorted by count
+    // Get open ports and their counts
     const openPortsCursor = ipCollection.aggregate([
       { $group: { _id: "$port", count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
+      { $sort: { count: -1 } },
+      { $limit: 5 },
     ]);
     const openPorts = await openPortsCursor.toArray();
 
-    // Get unique cities and their counts
+    // Get unique cities and their counts, sorted by count
     const uniqueCitiesCursor = ipCollection.aggregate([
-      { $group: { _id: "$city", count: { $sum: 1 } } }
+      { $group: { _id: "$city", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
     ]);
     const uniqueCities = await uniqueCitiesCursor.toArray();
 
@@ -52,37 +54,58 @@ app.get('/', async (req, res) => {
     const mostPopularContentCursor = ipCollection.aggregate([
       { $group: { _id: "$data", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
-      { $limit: 1 }
+      { $limit: 3 }, // Limit to the top 3 most popular content
     ]);
     const mostPopularContent = await mostPopularContentCursor.toArray();
+
     const mostPopularData = mostPopularContent.length > 0 ? mostPopularContent[0] : null;
 
     // Get the last 3 records
     const lastThreeRecordsCursor = ipCollection.find().sort({ _id: -1 }).limit(3);
     const lastThreeRecords = await lastThreeRecordsCursor.toArray();
 
+    // Filter out null and empty string entries from mostPopularContent
+    const validMostPopularContent = mostPopularContent.filter(
+      (content) => content._id !== null && content._id !== ""
+    );
+
+    // Replace null and empty string with "Null"
+    const formattedMostPopularContent = validMostPopularContent.map((content) => ({
+      _id: content._id || "Null",
+      count: content.count,
+    }));
+
     // Prepare statistics
     const statistics = {
       open_ports: openPorts,
       unique_cities: uniqueCities,
-      most_popular_content: mostPopularData,
-      last_three_records: lastThreeRecords
+      most_popular_content: formattedMostPopularContent,
+      last_three_records: lastThreeRecords,
     };
 
     // Get the number of bans and no bans
-    const bansCursor = ipCollection.countDocuments({ 
-      $or: [ 
+    const bansCursor = ipCollection.countDocuments({
+      $or: [
         { banned: true }, // Check if the document has the "banned" field set to true
-        { $or: statistics.last_three_records.map(record => ({ [`ban_${record.ban_id}`]: { $exists: true } })) } // Check for each ban_id property
-      ]
+        {
+          $or: statistics.last_three_records.map((record) => ({
+            [`ban_${record.ban_id}`]: { $exists: true },
+          })),
+        }, // Check for each ban_id property
+      ],
     });
-    const noBansCursor = ipCollection.countDocuments({ 
-      $and: [ 
+    const noBansCursor = ipCollection.countDocuments({
+      $and: [
         { banned: { $ne: true } }, // Check if the document does not have the "banned" field set to true
-        { $nor: [ // Ensure none of the ban properties exist
-          ...statistics.last_three_records.map(record => ({ [`ban_${record.ban_id}`]: { $exists: true } }))
-        ]}
-      ]
+        {
+          $nor: [
+            // Ensure none of the ban properties exist
+            ...statistics.last_three_records.map((record) => ({
+              [`ban_${record.ban_id}`]: { $exists: true },
+            })),
+          ],
+        },
+      ],
     });
     const [bansCount, noBansCount] = await Promise.all([bansCursor, noBansCursor]);
 
@@ -191,44 +214,81 @@ app.get('/', async (req, res) => {
         <div class="statistics">
           <h2>Top Open Ports:</h2>
           <div class="bars">
-            ${statistics.open_ports.map(port => `
+            ${statistics.open_ports
+              .map(
+                (port) => `
               <div class="bar">
                 <span>${port._id}</span>
-                <div class="bar-fill" style="width: ${(port.count / (statistics.open_ports[0] ? statistics.open_ports[0].count : 1)) * 100}%;"></div>
+                <div class="bar-fill" style="width: ${
+                  (port.count / (statistics.open_ports[0] ? statistics.open_ports[0].count : 1)) *
+                  100
+                }%;"></div>
                 <span>${port.count}</span>
-              </div>`).join('')}
+              </div>`
+              )
+              .join("")}
           </div>
           <h2>Most Popular Content:</h2>
           <div class="bars">
-            ${statistics.most_popular_content ? `
-              <div class="bar">
-                <span>${statistics.most_popular_content._id}</span>
-                <div class="bar-fill" style="width: ${(statistics.most_popular_content.count / (statistics.most_popular_content.count + 1)) * 100}%;"></div>
-                <span>${statistics.most_popular_content.count}</span>
-              </div>` : 'N/A'}
+            ${
+              statistics.most_popular_content && statistics.most_popular_content.length > 0
+                ? statistics.most_popular_content
+                    .slice(0, 3)
+                    .map(
+                      (content) => `
+                    <div class="bar">
+                      <span>${
+                        content._id === null || content._id === "" ? "Null" : content._id
+                      }</span>
+                      <div class="bar-fill" style="width: ${
+                        (content.count / (statistics.most_popular_content[0].count || 1)) * 100
+                      }%;"></div>
+                      <span>${content.count}</span>
+                    </div>`
+                    )
+                    .join("")
+                : "N/A"
+            }
           </div>
           <h2>Top Cities:</h2>
           <div class="bars">
-            ${statistics.unique_cities.map(city => `
+            ${statistics.unique_cities
+              .sort((a, b) => b.count - a.count)
+              .map(
+                (city) => `
               <div class="bar">
                 <span>${city._id}</span>
-                <div class="bar-fill" style="width: ${(city.count / (statistics.unique_cities[0] ? statistics.unique_cities[0].count : 1)) * 100}%;"></div>
+                <div class="bar-fill" style="width: ${
+                  (city.count /
+                    (statistics.unique_cities[0] ? statistics.unique_cities[0].count : 1)) *
+                  100
+                }%;"></div>
                 <span>${city.count}</span>
-              </div>`).join('')}
+              </div>`
+              )
+              .join("")}
           </div>
           <h2>Crowdsec Bans:</h2>
           <div class="bars">
-            ${bansCount !== undefined ? `
+            ${
+              bansCount !== undefined
+                ? `
               <div class="bar">
                 <span>Bans</span>
-                <div class="bar-fill" style="width: ${(bansCount / (bansCount + noBansCount || 1)) * 100}%;"></div>
+                <div class="bar-fill" style="width: ${
+                  (bansCount / (bansCount + noBansCount || 1)) * 100
+                }%;"></div>
                 <span>${bansCount}</span>
               </div>
               <div class="bar">
                 <span>No Bans</span>
-                <div class="bar-fill" style="width: ${(noBansCount / (bansCount + noBansCount || 1)) * 100}%;"></div>
+                <div class="bar-fill" style="width: ${
+                  (noBansCount / (bansCount + noBansCount || 1)) * 100
+                }%;"></div>
                 <span>${noBansCount}</span>
-              </div>` : 'N/A'}
+              </div>`
+                : "N/A"
+            }
           </div>
         </div>
       </div>
