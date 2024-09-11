@@ -84,14 +84,14 @@ services:
 
   maxmind: 
     image: observabilitystack/geoip-api
-    profiles: [ not-kafka, transform, all]
+    profiles: [ not-kafka, transform, maxmind, all]
     container_name: maxmind
     restart: always 
     volumes:
       - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
       - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
-    # ports: 
-    #   - 8080:8080
+    ports: 
+      - 8080:8080
   # <-- End Transformation --> #
 
   # <-- Loading --> #
