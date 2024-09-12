@@ -15,7 +15,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1vh;
+  padding: 1vh 2rem;
+
+}
+
+.header, .footer {
+    backdrop-filter: contrast(0.9);
+    
 }
 
 .statistics h2 {

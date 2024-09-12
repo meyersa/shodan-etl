@@ -174,11 +174,11 @@ app.get("/", async (req, res) => {
       <script defer data-domain="shodanetl.meyerstk.com" src="https://plausible.meyerstk.com/js/script.js"></script>
     </head>
     <body>
+      <div class="header">
+        <h1>Shodan ETL Dashboard</h1>
+        <i class="fas fa-sun theme-switch" onclick="toggleDarkMode()"></i>
+      </div>
       <div class="container">
-        <div class="header">
-          <h1>Shodan ETL Dashboard</h1>
-          <i class="fas fa-sun theme-switch" onclick="toggleDarkMode()"></i>
-        </div>
         <div class="statistics">
           <h2>Top Open Ports:</h2>
           <div class="bars">
