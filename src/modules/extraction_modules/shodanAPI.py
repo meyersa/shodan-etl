@@ -79,7 +79,7 @@ class shodanAPI:
         if not query:
             raise ValueError("Query is undefined")
 
-        result = self.api.search(query) # type: dict
+        result = self.api.search(query, limit=1000) # type: dict
         
         all_results = result.get("matches") # type: list
         num_results = result.get("total") # type: int
@@ -92,12 +92,14 @@ class shodanAPI:
 
         logging.debug(f'Found more than 100 results, querying additional pages')
 
-        page_num = 2
-        while (page_num - 1) * 100 < num_results:
-            cur_res = self.api.search(query, page=page_num) # type: dict
+        logging.warning(f'THIS CODE IS STILL DISABLED')
+        # page_num = 2
+        # while (page_num - 1) * 1000 < num_results:
+        #     print(len(all_results))
+        #     cur_res = self.api.search(query, page=page_num, limit=1000) # type: dict
 
-            all_results.append(cur_res.get("matches"))
-            page_num += 1
+        #     all_results.extend(cur_res.get("matches"))
+        #     page_num += 1
                 
         logging.debug(f'Returning matches')
 

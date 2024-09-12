@@ -10,11 +10,11 @@ class Load():
         for inp_dict in inp: 
             inp_ip = inp_dict.get("ip_str")
 
-            cur_entry = self.mongo.get("1.1.1.1") 
+            cur_entry = self.mongo.get(inp_ip) 
 
             if not cur_entry: 
                 success &= self.mongo.post(inp_dict)
                 continue
             
-            pass
+            return success 
             

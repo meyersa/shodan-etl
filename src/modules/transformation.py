@@ -9,6 +9,7 @@ from modules.transformation_modules.flatten import flatten_loc
 from modules.transformation_modules.merge import merge_dict
 
 import time
+import logging
 
 
 class Transformation():
@@ -24,8 +25,14 @@ class Transformation():
             inp_dict = clean_dict(inp_dict)
 
         inp = merge_dict(inp)
+        length = len(inp)
+        count = 1
+
+        logging.info(f'Processing {length} entries')
 
         for inp_dict in inp:
+            logging.debug(f'Transforming {count}/{length}')
+
             ip = inp_dict.get("ip_str")
 
             inp_dict.update(self.crowdsecAPI.query(ip))
@@ -35,6 +42,9 @@ class Transformation():
             inp_dict = clean_dict(inp_dict)
 
             clean_inp.append(inp_dict)
+
+            logging.debug(f'Done with {count}/{length}')
+            count += 1 
 
             # Don't want to stress anything too hard
             time.sleep(1)
