@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const { MongoClient } = require("mongodb");
 
 const app = express();
@@ -11,23 +12,35 @@ const options = {
   serverSelectionTimeoutMS: 10000,
 };
 
+// Define our collection variable
 let ipCollection;
 
 // Attempt to connect before startup (build condition)
 (async () => {
   try {
     // Connect to MongoDB
+    console.log("Connecting to MongoDB...");
     const client = await MongoClient.connect(MONGO_URL, options);
+    console.log("Connected to MongoDB");
 
     // Connect to specified DB
+    console.log("Connecting to specified database");
     const db = client.db(MONGO_DB);
-    ipCollection = db.collection("ip-information");
-    console.log("Connected to MongoDB");
+
+    console.log("Connecting to specified collection");
+    ipCollection = db.collection("ips");
+
+    console.log("Mongo is ready...");
   } catch (e) {
     console.error("Unable to connect to MongoDB, ignore if this was during initial build", e);
     process.exit(1);
   }
 })();
+
+// Serve the specific CSS file using a custom route
+app.get("/express.css", (req, res) => {
+  res.sendFile(path.join(__dirname, "express.css"));
+});
 
 app.get("/", async (req, res) => {
   try {
@@ -35,39 +48,77 @@ app.get("/", async (req, res) => {
       throw new Error("MongoDB connection not established");
     }
 
-    // Get open ports and their counts
+    console.log("Getting total document count");
+    const totalCountCursor = ipCollection.countDocuments({});
+    const totalcount = await totalCountCursor;
+
+    console.log("Getting open ports and counts");
     const openPortsCursor = ipCollection.aggregate([
-      { $group: { _id: "$port", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 },
+      {
+        $project: {
+          data: {
+            $objectToArray: "$data",
+          },
+        },
+      },
+      {
+        $unwind: "$data",
+      },
+      {
+        $group: {
+          _id: "$data.v.port",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $limit: 5,
+      },
     ]);
     const openPorts = await openPortsCursor.toArray();
 
-    // Get unique cities and their counts, sorted by count
-    const uniqueCitiesCursor = ipCollection.aggregate([
-      { $group: { _id: "$city", count: { $sum: 1 } } },
+    console.log("Getting unique countries and their count");
+    const uniqueCountriesCursor = ipCollection.aggregate([
+      { $group: { _id: "$location.country", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
-    const uniqueCities = await uniqueCitiesCursor.toArray();
+    const uniqueCountries = await uniqueCountriesCursor.toArray();
 
-    // Get most popular content and its count
+    console.log("Get most popular content and its count");
     const mostPopularContentCursor = ipCollection.aggregate([
-      { $group: { _id: "$data", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 3 }, // Limit to the top 3 most popular content
+      {
+        $project: {
+          data: {
+            $objectToArray: "$data",
+          },
+        },
+      },
+      {
+        $unwind: "$data",
+      },
+      {
+        $group: {
+          _id: "$data.v.data",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $limit: 3,
+      },
     ]);
     const mostPopularContent = await mostPopularContentCursor.toArray();
-
-    const mostPopularData = mostPopularContent.length > 0 ? mostPopularContent[0] : null;
 
     // Get the last 3 records
     const lastThreeRecordsCursor = ipCollection.find().sort({ _id: -1 }).limit(3);
     const lastThreeRecords = await lastThreeRecordsCursor.toArray();
 
     // Filter out null and empty string entries from mostPopularContent
-    const validMostPopularContent = mostPopularContent.filter(
-      (content) => content._id !== null && content._id !== ""
-    );
+    const validMostPopularContent = mostPopularContent.filter((content) => content._id !== null && content._id !== "");
 
     // Replace null and empty string with "Null"
     const formattedMostPopularContent = validMostPopularContent.map((content) => ({
@@ -77,8 +128,9 @@ app.get("/", async (req, res) => {
 
     // Prepare statistics
     const statistics = {
+      total_count: totalcount,
       open_ports: openPorts,
-      unique_cities: uniqueCities,
+      unique_countries: uniqueCountries,
       most_popular_content: formattedMostPopularContent,
       last_three_records: lastThreeRecords,
     };
@@ -118,93 +170,8 @@ app.get("/", async (req, res) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Shodan ETL Dashboard</title>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+      <link rel="stylesheet" href="/express.css">
       <script defer data-domain="shodanetl.meyerstk.com" src="https://plausible.meyerstk.com/js/script.js"></script>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          transition: background-color 0.5s, color 0.5s;
-          margin: 0;
-          padding: 0;
-          background-color: #f5f5f5;
-          color: #333;
-        }
-        .container {
-          padding: 1vh 2rem;
-        }
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1vh;
-        }
-        .statistics h2 {
-          margin-top: 2vh;
-          margin-bottom: 1vh;
-        }
-        .statistics ul {
-          list-style-type: none;
-          padding-left: 0;
-        }
-        .footer {
-          margin-top: 3vh;
-          text-align: center;
-          padding: 1vh 2rem;
-        }
-        .dark-mode {
-          background-color: #333;
-          color: #f5f5f5;
-        }
-        .dark-mode .theme-switch {
-          color: #f5f5f5;
-          font-size: 2.5vh;
-        }
-        a {
-          text-decoration: none;
-          color: inherit;
-        }
-        .bar {
-          display: flex;
-          align-items: center;
-          margin-bottom: 1vh;
-        }
-        .bar span {
-          display: inline-block;
-          background-color: #ddd;
-          color: #333;
-          padding: 1vh;
-          font-size: 1.2vh; /* Adjusted font size */
-          text-align: center;
-          vertical-align: middle;
-        }
-        .bar .bar-fill {
-          height: 2vh;
-          background-color: #999;
-          border-radius: 2vh;
-          min-width: 5%; /* Added minimum width */
-          margin-left: 1rem;
-          margin-right: 1rem;
-        }
-        .bar span:first-child {
-          min-width: 10vh;
-        }
-        .bar span:last-child {
-          margin-right: 2vw;
-        }
-        .fa-heart, .theme-switch {
-          font-size: 2.5vh;
-        }
-        ul {
-          text-overflow: ellipsis;
-          max-width: 100dvw;
-          overflow: hidden;
-        }
-        .footer .fa-heart {
-          font-size: 2vh;
-        }
-        .footer a {
-          text-decoration: underline;
-        }
-      </style>
     </head>
     <body>
       <div class="container">
@@ -221,8 +188,7 @@ app.get("/", async (req, res) => {
               <div class="bar">
                 <span>${port._id}</span>
                 <div class="bar-fill" style="width: ${
-                  (port.count / (statistics.open_ports[0] ? statistics.open_ports[0].count : 1)) *
-                  100
+                  (port.count / (statistics.open_ports[0] ? statistics.open_ports[0].count : 1)) * 100
                 }%;"></div>
                 <span>${port.count}</span>
               </div>`
@@ -238,9 +204,7 @@ app.get("/", async (req, res) => {
                     .map(
                       (content) => `
                     <div class="bar">
-                      <span>${
-                        content._id === null || content._id === "" ? "Null" : content._id
-                      }</span>
+                      <span>${content._id === null || content._id === "" ? "Null" : content._id}</span>
                       <div class="bar-fill" style="width: ${
                         (content.count / (statistics.most_popular_content[0].count || 1)) * 100
                       }%;"></div>
@@ -251,18 +215,16 @@ app.get("/", async (req, res) => {
                 : "N/A"
             }
           </div>
-          <h2>Top Cities:</h2>
+          <h2>Top Countries:</h2>
           <div class="bars">
-            ${statistics.unique_cities
+            ${statistics.unique_countries
               .sort((a, b) => b.count - a.count)
               .map(
                 (city) => `
               <div class="bar">
                 <span>${city._id}</span>
                 <div class="bar-fill" style="width: ${
-                  (city.count /
-                    (statistics.unique_cities[0] ? statistics.unique_cities[0].count : 1)) *
-                  100
+                  (city.count / (statistics.unique_countries[0] ? statistics.unique_countries[0].count : 1)) * 100
                 }%;"></div>
                 <span>${city.count}</span>
               </div>`
@@ -274,23 +236,26 @@ app.get("/", async (req, res) => {
             ${
               bansCount !== undefined
                 ? `
-              <div class="bar">
-                <span>Bans</span>
-                <div class="bar-fill" style="width: ${
-                  (bansCount / (bansCount + noBansCount || 1)) * 100
-                }%;"></div>
-                <span>${bansCount}</span>
+                <div class="bar">
+                <span>No Bans</span>
+                <div class="bar-fill" style="width: ${(noBansCount / (bansCount + noBansCount || 1)) * 100}%;"></div>
+                <span>${noBansCount}</span>
               </div>
               <div class="bar">
-                <span>No Bans</span>
-                <div class="bar-fill" style="width: ${
-                  (noBansCount / (bansCount + noBansCount || 1)) * 100
-                }%;"></div>
-                <span>${noBansCount}</span>
-              </div>`
+                <span>Bans</span>
+                <div class="bar-fill" style="width: ${(bansCount / (bansCount + noBansCount || 1)) * 100}%;"></div>
+                <span>${bansCount}</span>
+              </div>
+                  `
                 : "N/A"
             }
           </div>
+          <h2>Total Records:</h2>
+            <div class="bars">
+              <div class="bar">
+                <span>${statistics.total_count}</span>
+              </div>
+            </div>
         </div>
       </div>
       <div class="footer">
