@@ -1,6 +1,6 @@
 import logging 
 
-from scraper_modules.extraction_modules.shodanAPI import shodanAPI
+from modules.extraction_modules.shodanAPI import shodanAPI
 
 class Extraction(): 
     def __init__(self, SHODAN_API_KEY, query) -> None:

@@ -16,11 +16,17 @@ Load:
 """
 
 import os
+import dotenv
+dotenv.load_dotenv("../.env")
 import logging 
 import time 
+import sys 
 
-from scraper_modules.extraction import Extraction
-from scraper_modules.transformation import Transformation
+from modules.extraction import Extraction
+from modules.transformation import Transformation
+from modules.load import Load
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 SHODAN_API_KEY = os.getenv("SHODAN_API_KEY")
 # SHODAN_QUERY = os.getenv("SHODAN_QUERY")
@@ -31,6 +37,9 @@ CROWDSEC_LAPI_URL = os.getenv("CROWDSEC_LAPI_URL")
 
 # MAXMIND_API_URL = os.getenv("MAXMIND_API_URL")
 MAXMIND_API_URL = "http://localhost:8080/"
+
+MONGO_URL = os.getenv("MONGO_URL")
+MONGO_DB = os.getenv("MONGO_DB")
 
 SLEEP = os.getenv("SLEEP")
 
@@ -53,6 +62,7 @@ def main():
     logging.info('Initializing modules')
     eStage = Extraction(SHODAN_API_KEY, SHODAN_QUERY)
     tStage = Transformation(crowdsec_api_key=CROWDSEC_LAPI_KEY, crowdsec_api_url=CROWDSEC_LAPI_URL, maxmind_api_url=MAXMIND_API_URL)
+    lStage = Load(MONGO_URL, MONGO_DB) 
     logging.info('Initialized modules')
 
     logging.info('Starting scraping loop')
@@ -60,6 +70,7 @@ def main():
         iter_res_st1 = eStage.get() 
         iter_res_st2 = tStage.get(iter_res_st1)
 
+        lStage.post(iter_res_st2)
 
         logging.info(f'Sleeping for {SLEEP}s')
         time.sleep(SLEEP)        

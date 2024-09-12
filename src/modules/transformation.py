@@ -2,11 +2,11 @@
 Class to transform incoming data 
 
 """
-from scraper_modules.transformation_modules.clean import clean_dict
-from scraper_modules.transformation_modules.crowdsecAPI import crowdsecAPI
-from scraper_modules.transformation_modules.mindmaxAPI import maxmindAPI
-from scraper_modules.transformation_modules.flatten import flatten_loc
-from scraper_modules.transformation_modules.merge import merge_dict
+from modules.transformation_modules.clean import clean_dict
+from modules.transformation_modules.crowdsecAPI import crowdsecAPI
+from modules.transformation_modules.mindmaxAPI import maxmindAPI
+from modules.transformation_modules.flatten import flatten_loc
+from modules.transformation_modules.merge import merge_dict
 
 import time
 

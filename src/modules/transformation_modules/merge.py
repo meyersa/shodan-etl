@@ -22,7 +22,7 @@ def merge_dict(inp: list) -> list:
 
         }
 
-        cur_hash = inp_dict.get("hash")
+        cur_hash = str(inp_dict.get("hash")) 
         cur_data = {
             "data": inp_dict.get("data"),
             "port": inp_dict.get("port"),
