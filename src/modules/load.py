@@ -8,13 +8,7 @@ class Load():
         success = True 
 
         for inp_dict in inp: 
-            inp_ip = inp_dict.get("ip_str")
-
-            cur_entry = self.mongo.get(inp_ip) 
-
-            if not cur_entry: 
-                success &= self.mongo.post(inp_dict)
-                continue
+            success &= self.mongo.post(inp_dict)
             
-            return success 
+        return success 
             

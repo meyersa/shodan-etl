@@ -98,8 +98,13 @@ def batchProcess(inp: list) -> None:
 
         start += batchSize 
 
+        if start > len(inp): 
+            break 
+
         logging.info(f'Sleeping for {SHORT_SLEEP}s')
         time.sleep(SHORT_SLEEP)
+
+    logging.info(f'Finished batch')
 
 if __name__ == "__main__": 
     main()
