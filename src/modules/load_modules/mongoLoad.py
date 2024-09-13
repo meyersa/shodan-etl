@@ -74,11 +74,22 @@ class mongoLoad():
 
         inp_ip = inp.get("ip_str")
 
-        if self.ip_col.find_one({"ip_str": inp_ip}):
-            logging.debug('Found a duplicate, replacing it')
-            return self.replace(inp)
+        dup_check = self.ip_col.find_one({"ip_str": inp_ip})
 
-        return bool(self.ip_col.insert_one(inp))
+        # Nothing found
+        if not dup_check: 
+            return bool(self.ip_col.insert_one(inp))
+
+        dup_check = dup_check # type: dict 
+        dup_check.pop("_id")
+        
+        # Check if they are the same 
+        if dup_check == inp: 
+            return True 
+        
+        # Not the same
+        logging.debug('Found a duplicate, replacing it')
+        return self.replace(inp)
 
     def replace(self, inp: dict) -> bool: 
         """
@@ -91,8 +102,18 @@ class mongoLoad():
         Returns: 
             bool: if it was successful
         """
-        logging.debug('Replacing document in collection')
+        logging.debug('Updating document in collection')
 
         inp_ip = inp.get("ip_str")
+        old_inp = self.get(inp_ip)
 
+        # Get the data fields, since these can change
+        new_data = inp.get("data")
+        old_data = old_inp.get("data") # type: dict
+
+        # Update old with the new data if they are different
+        if new_data != old_data:
+            inp.get("data").update(old_data)
+
+        # Reinsert the document
         return bool(self.ip_col.replace_one({"ip_str": inp_ip}, inp))
