@@ -1,7 +1,4 @@
 # Pip Requirements File
 shodan 
-confluent_kafka
-python-dotenv
 requests
 pymongo
-flask

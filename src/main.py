@@ -16,8 +16,7 @@ Load:
 """
 
 import os
-import dotenv
-dotenv.load_dotenv("../.env")
+
 import logging 
 import time 
 import sys 
