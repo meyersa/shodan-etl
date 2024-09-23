@@ -28,14 +28,12 @@ from modules.load import Load
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 SHODAN_API_KEY = os.getenv("SHODAN_API_KEY")
-# SHODAN_QUERY = os.getenv("SHODAN_QUERY")
-SHODAN_QUERY = "ASN:AS27274"
+SHODAN_QUERY = os.getenv("SHODAN_QUERY")
 
 CROWDSEC_LAPI_KEY = os.getenv("CROWDSEC_LAPI_KEY")
 CROWDSEC_LAPI_URL = os.getenv("CROWDSEC_LAPI_URL")
 
-# MAXMIND_API_URL = os.getenv("MAXMIND_API_URL")
-MAXMIND_API_URL = "http://localhost:8080/"
+MAXMIND_API_URL = os.getenv("MAXMIND_API_URL")
 
 MONGO_URL = os.getenv("MONGO_URL")
 MONGO_DB = os.getenv("MONGO_DB")
