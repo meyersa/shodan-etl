@@ -1,172 +1,27 @@
-x-common-python: &common-python
-  image: python-runner
-  build: 
-    context: . 
-  develop:
-    watch: 
-      - action: sync+restart
-        path: ./src
-        target: /src
-      - action: rebuild
-        path: ./requirements.txt
-      - action: rebuild
-        path: ./.env
-  env_file:
-    - .env
-
 services:
-  # <-- Kafka --> #
-  zookeeper:
-    image: confluentinc/cp-zookeeper
-    profiles: [ kafka, all ]
-    container_name: zookeeper
-    restart: always
-    # ports:
-    #   - "2181:2181"
-    env_file:
-      - .env
-
-  kafka:
-    image: confluentinc/cp-kafka
-    profiles: [ kafka, all ] 
-    container_name: kafka
-    restart: always 
-    ports:
-      - "127.0.0.1:9092:9092"
-      - "127.0.0.1:29092:29092"
-    env_file:
-      - .env
-    depends_on:
-      - zookeeper
-  # <-- End Kafka --> #
-
-  # <-- Producers --> #
-  shodan-asn-producer:
-    <<: *common-python
+  shodan_producer:
     profiles: [ not-kafka, producer, all ]
-    container_name: shodan-asn-producer
-    environment:
-      - SHODAN_QUERY=asn:AS27274
-    command: ["python", "-u", "shodan_producer.py"]
-    depends_on:
-      - kafka
-
-  shodan-name-producer:
-    <<: *common-python
-    profiles: [ not-kafka, producer, all ]
-    container_name: shodan-name-producer
-    environment:
-      - SHODAN_QUERY=CMICH
-    command: ["python", "-u", "shodan_producer.py"]
-    depends_on:
-      - kafka
-  # <-- End Producers --> #
-
-  # <-- Transformation --> #
-  transformation:
-    <<: *common-python
-    profiles: [ not-kafka, transform, all ]
-    container_name: transformation
-    restart: always 
-    command: ["python", "-u", "transformation.py"]
-    depends_on:
-      - kafka
-
-  api-enrich:
-    <<: *common-python
-    profiles: [ not-kafka, transform, all ]
-    container_name: api-enrich
-    restart: always     
-    command: ["python", "-u", "api_enrich.py"]
-    depends_on:
-      - transformation
-      - maxmind
-
-  maxmind: 
-    image: observabilitystack/geoip-api
-    profiles: [ not-kafka, transform, maxmind, all]
-    container_name: maxmind
-    restart: always 
-    volumes:
-      - ./db/GeoLite2-ASN.mmdb:/srv/GeoLite2-ASN.mmdb
-      - ./db/GeoLite2-City.mmdb:/srv/GeoLite2-City.mmdb
-    ports: 
-      - 8080:8080
-  # <-- End Transformation --> #
-
-  # <-- Loading --> #
-  mongo-load: 
-    <<: *common-python
-    profiles: [ not-kafka, loading, all ]
-    container_name: mongo-load
-    restart: always
-    command: ["python", "-u", "mongo_load.py"]
-    depends_on:
-      - api-enrich
-      - mongodb
-
-  mongodb: 
-    profiles: [ not-kafka, loading, mongodb, all ]
-    container_name: mongodb
-    image: mongo:latest
-    restart: always 
+    build: 
+      context: .
+      dockerfile: pythonDockerfile
+    container_name: shodan_producer
     env_file:
       - .env
-    volumes: 
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/init-mongo.js
-      - mongodb-data:/data/db
-    # ports: 
-    #   - "127.0.0.1:27017:27017"
-  # <-- End Loading --> #
-
-  # <-- Displaying --> #
-  express-display: 
+      
+  shodan_display: 
     profiles: [ all, display ]
-    container_name: express-display
+    container_name: shodan_display
     restart: always
     build:
       context: .
       dockerfile: expressDockerfile
-    # ports:
-    #   - "3000:3000"
     env_file:
       - .env
     networks:
       - proxy
-      - default
-    depends_on:
-      - mongodb
-  # <-- End Displaying --> # 
-
-  # <-- Development --> #
-  kadeck: 
-    image: xeotek/kadeck:latest
-    profiles: [ development ]
-    container_name: kadeck
-    # ports: 
-    #   - 80:80
-    environment:
-      - xeotek_kadeck_free="kadeck@i.meyersa.com"
-      - xeotek_kadeck_port=80
-
-  cloudflared: 
-    profiles: [ cloudflared, all ]
-    image: cloudflare/cloudflared
-    container_name: cloudflared
-    restart: always 
-    command: tunnel run 
-    environment: 
-      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
-    networks:
-      - proxy
-  # <-- Development --> # 
-
-volumes: 
-  crowdsec-config:
-  crowdsec-db:
-  mongodb-data:
 
 networks: 
   default:
   proxy: 
     name: proxy
+    external: true
