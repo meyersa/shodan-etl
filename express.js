@@ -39,7 +39,7 @@ let ipCollection;
 
 // Serve the specific CSS file using a custom route
 app.get("/express.css", (req, res) => {
-  res.sendFile(path.join(__dirname, "express.css"));
+  res.sendFile("express.css");
 });
 
 app.get("/", async (req, res) => {
