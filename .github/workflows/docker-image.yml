@@ -1,0 +1,48 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # This triggers the workflow when changes are pushed to the main branch
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Docker Buildx (optional for advanced builds)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Log in to GitHub's Docker registry
+      - name: Log in to GitHub Docker Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and push the Producer Docker image
+      - name: Build and push Producer Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: pythonDockerfile
+          push: true
+          tags: ghcr.io/meyersa/shodan_producer:latest
+          platforms: linux/amd64,linux/arm64/v8  # Specify the platforms here
+
+      # Build and push the Display Docker image
+      - name: Build and push Display Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: expressDockerfile
+          push: true
+          tags: ghcr.io/meyersa/shodan_display:latest
+          platforms: linux/amd64,linux/arm64/v8  # Specify the platforms here
