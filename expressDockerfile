@@ -11,6 +11,7 @@ RUN npm install
 
 # Copy the rest of the application code
 COPY ./express.js /src
+COPY ./express.css /src
 
 # Expose the port on which your application runs
 EXPOSE 3000
