@@ -7,6 +7,9 @@ const { stat } = require("fs");
 const app = express();
 const cache = new NodeCache();
 
+// Serve from static
+app.use(express.static(path.join(path.dirname(fileURLToPath(import.meta.url)), "static")));
+
 // Get credentials from ENV
 const { MONGO_URL, MONGO_DB } = process.env;
 
@@ -42,11 +45,6 @@ let ipCollection;
   console.log(`Startup finished \n\n\n`)
 
 })();
-
-// Serve the specific CSS file using a custom route
-app.get("/express.css", (req, res) => {
-  res.sendFile(path.join(__dirname, "express.css"));
-});
 
 async function getInfo() {
   console.log("--- Getting Shodan information ---");
@@ -179,6 +177,7 @@ app.get("/", async (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Shodan ETL Dashboard</title>
+      <link rel="icon" type="image/x-icon" href="/favicon.ico" />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
       <link rel="stylesheet" href="/express.css">
       <script defer data-domain="shodanetl.meyerstk.com" src="https://plausible.meyerstk.com/js/script.js"></script>
